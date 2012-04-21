@@ -1,0 +1,13 @@
+
+bin/*
+obj/*
+tmp/*
+
+*.o
+*.bin
+
+*~
+*.swp
++.swo
+*.swn
+*.un~
