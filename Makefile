@@ -2,10 +2,12 @@
 #
 #
 
-SRC_DIR=src
-BIN_DIR=bin
-OBJ_DIR=obj
-INCLUDE_DIR=./include/
+TOP ?= $(shell pwd)
+
+SRC_DIR=$(TOP)/src
+BIN_DIR=$(TOP)/bin
+OBJ_DIR=$(TOP)/obj
+INCLUDE_DIR=$(TOP)/include
 
 C_SRCS=$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(wildcard $(SRC_DIR)/*.c))
 ASM_SRCS=$(patsubst $(SRC_DIR)/%.s,$(OBJ_DIR)/%.o,$(wildcard $(SRC_DIR)/*.s))
@@ -20,7 +22,7 @@ EXE_NAME=kernel.bin
 DEFINES=
 
 FLAGS=$(addprefix -D,$(DEFINES))
-CFLAGS=-nostdlib -nostdinc -fno-builtin  -fno-stack-protector -B $(INCLUDE_DIR) $(FLAGS) -c
+CFLAGS=-nostdlib -nostdinc -fno-builtin  -fno-stack-protector -iquote$(INCLUDE_DIR) $(FLAGS) -c
 LDFLAGS=-Tlink.ld
 ASFLAGS=-felf -I. -I$(INCLUDE_DIR) $(FLAGS)
 
@@ -48,4 +50,14 @@ $(C_SRCS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 $(ASM_SRCS): $(OBJ_DIR)/%.o: $(SRC_DIR)/%.s
 	nasm $(ASFLAGS) -o $@ $<
 
-.PHONY : all clean compile link
+image:
+	losetup /dev/loop0 "$(BIN_DIR)/floppy.img"
+	mount /dev/loop0 /mnt/tmp
+	cp "$(BIN_DIR)/$(EXE_NAME)" "/mnt/tmp/$(EXE_NAME)"
+	sync
+	sync
+	sync
+	umount /dev/loop0
+	losetup -d /dev/loop0
+
+.PHONY : all clean compile link image
