@@ -1,6 +1,6 @@
 /* multiboot.h - Multiboot header file. */
 /* Copyright (C) 1999,2003,2007,2008,2009  Free Software Foundation, Inc.
- *
+ *<F3>
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
  *  of this software and associated documentation files (the "Software"), to
  *  deal in the Software without restriction, including without limitation the
@@ -92,7 +92,7 @@
 
 #ifndef ASM_FILE
 
-typedef unsigned shortmultiboot_uint16_t;
+typedef unsigned short multiboot_uint16_t;
 typedef unsigned int  multiboot_uint32_t;
 typedef unsigned long long multiboot_uint64_t;
 
