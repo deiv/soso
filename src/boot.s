@@ -22,10 +22,10 @@ KERNEL_MAGIC		    equ	0x13265213  ; Our magic number.
 
 ; Multiboot header.
 mboot:
-    dd  MULTIBOOT_HEADER_MAGIC      ; GRUB will search for this value on each
+    dd  MULTIBOOT_HEADER_MAGIC  ; GRUB will search for this value on each
                                 ; 4-byte boundary in your kernel file.
-    dd  MULTIBOOT_HEADER_FLAGS      ; How GRUB should load your file / settings.
-    dd  MULTIBOOT_CHECKSUM          ; To ensure that the above values are correct.
+    dd  MULTIBOOT_HEADER_FLAGS  ; How GRUB should load your file / settings.
+    dd  MULTIBOOT_CHECKSUM      ; To ensure that the above values are correct.
     
     dd  mboot                   ; Location of this descriptor.
     dd  code                    ; Start of kernel '.text' (code) section.
@@ -38,12 +38,13 @@ mboot:
 
 start:
 	; Check if data segment linked, located, and loaded properly.
-	mov eax, [kernel_magic]
-	cmp eax, KERNEL_MAGIC
+	mov ecx, [kernel_magic]
+	cmp ecx, KERNEL_MAGIC
 	jne die
 
-    push esp                    ; Pass the stack pointer.
-    push ebx                    ; And the multiboot header to main().
+    push eax                    ; Pass the Multiboot-bootloader magic,
+    push esp                    ; the stack pointer,
+    push ebx                    ; and the multiboot header to main().
 
 
     ; Execute the kernel:

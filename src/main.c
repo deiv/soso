@@ -1,26 +1,35 @@
 // main.c -- Defines the C-code kernel entry point, calls initialisation routines.
 //           Made for JamesM's tutorials <www.jamesmolloy.co.uk>
 
+#include <multiboot.h>
+
 #include "monitor.h"
 #include "descriptor_tables.h"
 #include "timer.h"
 #include "paging.h"
-#include "multiboot.h"
 #include "fs.h"
 #include "initrd.h"
 #include "task.h"
 #include "syscall.h"
+#include "common.h"
 
 extern u32int placement_address;
 u32int initial_esp;
 
-int main(struct multiboot *mboot_ptr, u32int initial_stack)
+int main(struct multiboot_info *mboot_ptr, u32int initial_stack, u32int mboot_magic)
 {
     initial_esp = initial_stack;
+
+    /* Initialise the screen (by clearing it) as soon as posible, we need an
+       early printk(). */
+    monitor_clear();
+
+    if( mboot_magic != MULTIBOOT_BOOTLOADER_MAGIC ) {
+        PANIC("Not multiboot-compliant bootloader used...");
+    }
+
     // Initialise all the ISRs and segmentation
     init_descriptor_tables();
-    // Initialise the screen (by clearing it)
-    monitor_clear();
 
     // Initialise the PIT to 100Hz
     asm volatile("sti");
