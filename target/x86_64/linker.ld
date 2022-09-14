@@ -3,14 +3,31 @@ ENTRY(start)
 SECTIONS
 {
 	. = 1M;
+    _kernel_start = .;
 
-	.boot :
+    .text BLOCK(4K) : ALIGN(4K)
 	{
-		KEEP(*(.multiboot_header))
-	}
-
-	.text :
-	{
+		*(.multiboot_header)
 		*(.text)
 	}
+
+    /* Read-only data. */
+    .rodata BLOCK(4K) : ALIGN(4K)
+    {
+        *(.rodata)
+    }
+
+    /* Read-write data (initialized) */
+    .data BLOCK(4K) : ALIGN(4K)
+    {
+        *(.data)
+    }
+
+    /* Read-write data (uninitialized) and stack */
+    .bss BLOCK(4K) : ALIGN(4K)
+    {
+        *(.bss)
+    }
+
+    _kernel_end = .;
 }
