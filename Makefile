@@ -34,9 +34,12 @@ x86_64_asm_object_files := $(patsubst src/arch/x86_64/%.S, ${BUILD_DIR}/x86_64/%
 
 x86_64_object_files := $(x86_64_c_object_files) $(x86_64_asm_object_files)
 
+drivers_source_files := $(shell find src/drivers -name *.c)
+drivers_object_files := $(patsubst src/drivers/%.c, ${BUILD_DIR}/drivers/%.o, $(drivers_source_files))
+
 $(kernel_object_files): ${BUILD_DIR}/kernel/%.o : src/kernel/%.c
 	mkdir -p $(dir $@)
-	x86_64-elf-gcc -c -I src/include $(CFLAGS) $(patsubst ${BUILD_DIR}/kernel/%.o, src/kernel/%.c, $@) -o $@
+	x86_64-elf-gcc -c -I src/include -I src/arch/x86_64/include $(CFLAGS) $(patsubst ${BUILD_DIR}/kernel/%.o, src/kernel/%.c, $@) -o $@
 
 $(boot_object_files): ${BUILD_DIR}/boot/%.o : src/boot/%.c
 	mkdir -p $(dir $@)
@@ -51,6 +54,10 @@ $(x86_64_asm_object_files): ${BUILD_DIR}/x86_64/%.o : src/arch/x86_64/%.S
 	#nasm -f elf64 $(patsubst ${BUILD_DIR}/x86_64/%.o, src/arch/x86_64/%.asm, $@) -o $@
 	x86_64-elf-gcc  -c $(CFLAGS) -I src/arch/x86_64/include $(patsubst ${BUILD_DIR}/x86_64/%.o, src/arch/x86_64/%.S, $@) -o $@
 
+$(drivers_object_files): ${BUILD_DIR}/drivers/%.o : src/drivers/%.c
+	mkdir -p $(dir $@)
+	x86_64-elf-gcc -c -I src/include -I src/arch/x86_64/include $(CFLAGS) $(patsubst ${BUILD_DIR}/drivers/%.o, src/drivers/%.c, $@) -o $@
+
 ${x86_64_DIST_DIR}:
 	mkdir -p $@
 
@@ -59,9 +66,9 @@ ${LINKER_SCRIPT}: ${LINKER_SCRIPT_IN}
 	x86_64-elf-cpp -P -o $@ $<
 
 .PHONY: build-x86_64
-build-x86_64: ${x86_64_DIST_DIR} ${LINKER_SCRIPT} $(kernel_object_files) $(boot_object_files) $(x86_64_object_files)
+build-x86_64: ${x86_64_DIST_DIR} ${LINKER_SCRIPT} $(kernel_object_files) $(boot_object_files) $(x86_64_object_files) $(drivers_object_files)
 	#x86_64-elf-ld  -n  -o ${x86_64_DIST_DIR}/${KERNEL_EXE} -T ${LINKER_SCRIPT} $(kernel_object_files) $(boot_object_files) $(x86_64_object_files)
-	x86_64-elf-gcc -n -T ${LINKER_SCRIPT} -o ${x86_64_DIST_DIR}/${KERNEL_EXE} $(CFLAGS) -O2 -nostdlib $(kernel_object_files) $(boot_object_files) $(x86_64_object_files)
+	x86_64-elf-gcc -n -T ${LINKER_SCRIPT} -o ${x86_64_DIST_DIR}/${KERNEL_EXE} $(CFLAGS) -O2 -nostdlib $(kernel_object_files) $(boot_object_files) $(x86_64_object_files) $(drivers_object_files)
 	cp ${x86_64_DIST_DIR}/${KERNEL_EXE} ${x86_64_TARGET_DIR}/iso/boot/
 	grub-mkrescue /usr/lib/grub/i386-pc -o ${x86_64_DIST_DIR}/${KERNEL_ISO} ${x86_64_TARGET_DIR}/iso
 

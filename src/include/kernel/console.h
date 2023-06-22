@@ -22,9 +22,12 @@ enum {
     PRINT_COLOR_WHITE = 15,
 };
 
-void print_clear();
-void print_char(char character);
-void print_str(char* string);
-void print_set_color(uint8_t foreground, uint8_t background);
-
-int printf(const char* str, ...);
+/**
+ * TODO: remove the char usage is dependent of encoding
+ */
+struct console {
+    void (*clear)(void);
+    void (*put_char)(char character);
+    void (*put_string)(char* string);
+    void (*set_color)(uint8_t foreground, uint8_t background);
+};

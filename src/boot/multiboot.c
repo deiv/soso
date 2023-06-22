@@ -2,6 +2,8 @@
 #include "boot/multiboot.h"
 #include "boot/multiboot2.h"
 
+#include "kernel/printk.h"
+
 void print_multiboot_info(unsigned long addr_info)
 {
     struct multiboot_tag *tag;
@@ -13,30 +15,30 @@ void print_multiboot_info(unsigned long addr_info)
 
         switch (tag->type) {
             case MULTIBOOT_TAG_TYPE_CMDLINE:
-                printf ("Command line = %s\n",
+                printk("Command line = %s\n",
                         ((struct multiboot_tag_string *) tag)->string);
                 break;
 
             case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
-                printf ("Boot loader name = %s\n",
+                printk("Boot loader name = %s\n",
                         ((struct multiboot_tag_string *) tag)->string);
                 break;
 
             case MULTIBOOT_TAG_TYPE_MODULE:
-                printf ("Module at 0x%x-0x%x. Command line %s\n",
+                printk("Module at 0x%x-0x%x. Command line %s\n",
                         ((struct multiboot_tag_module *) tag)->mod_start,
                         ((struct multiboot_tag_module *) tag)->mod_end,
                         ((struct multiboot_tag_module *) tag)->cmdline);
                 break;
 
             case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
-                printf ("mem_lower = %dKB, mem_upper = %dKB\n",
+                printk("mem_lower = %dKB, mem_upper = %dKB\n",
                         ((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
                         ((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
                 break;
 
             case MULTIBOOT_TAG_TYPE_BOOTDEV:
-                printf ("Boot device 0x%x,%d,%d\n",
+                printk("Boot device 0x%x,%d,%d\n",
                         ((struct multiboot_tag_bootdev *) tag)->biosdev,
                         ((struct multiboot_tag_bootdev *) tag)->slice,
                         ((struct multiboot_tag_bootdev *) tag)->part);
@@ -45,7 +47,7 @@ void print_multiboot_info(unsigned long addr_info)
             case MULTIBOOT_TAG_TYPE_MMAP: {
                 multiboot_memory_map_t *mmap;
 
-                printf ("mmap\n");
+                printk("mmap\n");
 
                 for (mmap = ((struct multiboot_tag_mmap *) tag)->entries;
                      (multiboot_uint8_t *) mmap
@@ -53,7 +55,7 @@ void print_multiboot_info(unsigned long addr_info)
                      mmap = (multiboot_memory_map_t *)
                              ((unsigned long) mmap
                               + ((struct multiboot_tag_mmap *) tag)->entry_size)) {
-                    printf (" base_addr = 0x%x%x,"
+                    printk(" base_addr = 0x%x%x,"
                             " length = 0x%x%x, type = 0x%x\n",
                             (unsigned) (mmap->addr >> 32),
                             (unsigned) (mmap->addr & 0xffffffff),

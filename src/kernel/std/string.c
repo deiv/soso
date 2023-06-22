@@ -13,7 +13,7 @@ char * itoa_s(int value, char * buffer, int radix)
     if (value == 0 || radix > 16) {
         buffer[0] = '0';
         buffer[1] = '\0';
-        return;
+        return buffer;
     }
 
     while (value != 0) {
@@ -29,6 +29,7 @@ char * itoa_s(int value, char * buffer, int radix)
     }
 
     buffer[opos] = 0;
+    return buffer;
 }
 
 char* itoa(int value, char * buffer, int radix)
