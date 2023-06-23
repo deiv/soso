@@ -9,7 +9,7 @@ void kernel_main(unsigned long addr_mboot_info) {
     /*
      * TODO: initialize the console ...
      */
-    vga_console.clear();
+    vga_console.init();
     vga_console.set_color(PRINT_COLOR_YELLOW, PRINT_COLOR_BLACK);
 
 

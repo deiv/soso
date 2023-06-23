@@ -26,6 +26,7 @@ enum {
  * TODO: remove the char usage is dependent of encoding
  */
 struct console {
+    void (*init)(void);
     void (*clear)(void);
     void (*put_char)(char character);
     void (*put_string)(char* string);
