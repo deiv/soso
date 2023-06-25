@@ -1,4 +1,5 @@
-#include <memory.h>
+
+#include <asm/memory.h>
 
 .global boot_p4
 .global boot_p3

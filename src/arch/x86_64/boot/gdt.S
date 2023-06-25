@@ -1,5 +1,5 @@
 
-#include "memory.h"
+#include "asm/memory.h"
 
 .global gdt_descr_phys
 .global gdt_descr

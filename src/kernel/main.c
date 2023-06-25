@@ -1,6 +1,7 @@
 
 #include "kernel/console.h"
 #include "kernel/printk.h"
+#include "kernel/std/string.h"
 
 extern const struct console vga_console;
 

@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include <uapi/types.h>
-
+#include <soso/types.h>
 
 #ifndef __ASSEMBLY__
 
@@ -14,6 +13,12 @@ typedef __s32 s32;
 typedef __u32 u32;
 typedef __s64 s64;
 typedef __u64 u64;
+
+typedef _Bool bool;
+
+typedef __kernel_size_t	 size_t;
+typedef __kernel_ssize_t ssize_t;
+typedef __kernel_ptrdiff_t	ptrdiff_t;
 
 #endif
 

@@ -1,5 +1,6 @@
 
-#include <string.h>
+#include <kernel/std/string.h>
+#include <kernel/std/stddef.h>
 
 char tbuf[64];
 char bchars[] = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
@@ -34,12 +35,12 @@ char * itoa_s(int value, char * buffer, int radix)
 
 char* itoa(int value, char * buffer, int radix)
 {
-    if (radix > 16) return;
+    if (radix > 16) return NULL;
     if (value < 0) {
         *buffer++ = '-';
         value *= -1;
     }
-    itoa_s(value, buffer, radix);
+    return itoa_s(value, buffer, radix);
 }
 
 size_t strlen(const char *str)
@@ -114,4 +115,68 @@ size_t strlen(const char *str)
             }
         }
     }
+}
+
+/**
+ * memcpy - Copy one area of memory to another
+ * @dest: Where to copy to
+ * @src: Where to copy from
+ * @count: The size of the area.
+ *
+ * TODO: asm alternative
+ */
+void *memcpy(void *dest, const void *src, size_t count)
+{
+    char *tmp = dest;
+    const char *s = src;
+
+    while (count--)
+        *tmp++ = *s++;
+    return dest;
+}
+
+/**
+ * memset - Fill a region of memory with the given value
+ * @s: Pointer to the start of the area.
+ * @c: The byte to fill the area with
+ * @count: The size of the area.
+ *
+ * TODO: asm alternative
+ */
+void *memset(void *s, int c, size_t count)
+{
+    char *xs = s;
+
+    while (count--)
+        *xs++ = c;
+    return s;
+}
+
+/**
+ * memmove - Copy one area of memory to another
+ * @dest: Where to copy to
+ * @src: Where to copy from
+ * @count: The size of the area.
+ *
+ * TODO: asm alternative
+ */
+void *memmove(void *dest, const void *src, size_t count)
+{
+    char *tmp;
+    const char *s;
+
+    if (dest <= src) {
+        tmp = dest;
+        s = src;
+        while (count--)
+            *tmp++ = *s++;
+    } else {
+        tmp = dest;
+        tmp += count;
+        s = src;
+        s += count;
+        while (count--)
+            *--tmp = *--s;
+    }
+    return dest;
 }

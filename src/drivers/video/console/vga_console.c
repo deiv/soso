@@ -1,6 +1,7 @@
 
+#include <kernel/std/types.h>
 #include "kernel/console.h"
-#include "memory.h"
+#include "asm/memory.h"
 #include "asm/io.h"
 
 /*
@@ -25,14 +26,14 @@ const static size_t NUM_COLS = 80;
 const static size_t NUM_ROWS = 25;
 
 struct Char {
-    uint8_t character;
-    uint8_t color;
+    u8 character;
+    u8 color;
 };
 
 struct Char* buffer = (struct Char*) (physical_to_virtual(0xb8000));
 size_t current_col = 0;
 size_t current_row = 0;
-uint8_t current_color = PRINT_COLOR_WHITE | PRINT_COLOR_BLACK << 4;
+u8 current_color = PRINT_COLOR_WHITE | PRINT_COLOR_BLACK << 4;
 
 void vga_console_clear_row(size_t row);
 void vga_console_init();
@@ -41,7 +42,7 @@ void vga_console_newline();
 void vga_console_send_char(char character);
 void vga_console_put_char(char character);
 void vga_console_put_string(char* str);
-void vga_console_set_color(uint8_t foreground, uint8_t background);
+void vga_console_set_color(u8 foreground, u8 background);
 void vga_console_set_cursor_size(u16 from, u16 to);
 void vga_console_move_cursor(unsigned short pos);
 
@@ -99,7 +100,7 @@ void vga_console_send_char(char character) {
     }
 
     buffer[current_col + NUM_COLS * current_row] = (struct Char) {
-            .character =  (uint8_t) character,
+            .character =  (u8) character,
             .color = current_color,
     };
 
@@ -113,7 +114,7 @@ void vga_console_put_char(char character) {
 
 void vga_console_put_string(char* str) {
     for (size_t i = 0; 1; i++) {
-        char character = (uint8_t) str[i];
+        char character = (u8) str[i];
 
         if (character == '\0') {
             break;
@@ -125,7 +126,7 @@ void vga_console_put_string(char* str) {
     vga_console_move_cursor(current_row * NUM_COLS + current_col);
 }
 
-void vga_console_set_color(uint8_t foreground, uint8_t background) {
+void vga_console_set_color(u8 foreground, u8 background) {
     current_color = foreground + (background << 4);
 }
 

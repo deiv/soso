@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
+#include <kernel/std/types.h>
+#include <kernel/std/stddef.h>
 
 enum {
     PRINT_COLOR_BLACK = 0,
@@ -30,5 +30,5 @@ struct console {
     void (*clear)(void);
     void (*put_char)(char character);
     void (*put_string)(char* string);
-    void (*set_color)(uint8_t foreground, uint8_t background);
+    void (*set_color)(u8 foreground, u8 background);
 };

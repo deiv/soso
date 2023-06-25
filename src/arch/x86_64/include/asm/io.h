@@ -1,7 +1,7 @@
 /**
  * @file memory.h
  *
- * @brief Definitions related to x86 I/O instructions.
+ * @brief Definitions related to x86 port mapped I/O instructions.
  *
  * TODO: https://linux-kernel-labs.github.io/refs/pull/165/merge/labs/interrupts.html
  *
@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "types.h"
+#include <kernel/std/types.h>
 
 #define BUILDIO(bwl, bw, type)						\
 static inline void __out##bwl(type value, u16 port)			\

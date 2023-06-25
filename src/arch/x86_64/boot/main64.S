@@ -1,4 +1,5 @@
-#include <memory.h>
+
+#include <asm/memory.h>
 
 .global long_mode_start
 .extern kernel_main
