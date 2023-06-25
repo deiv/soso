@@ -1,4 +1,5 @@
-FROM randomdude/gcc-cross-x86_64-elf
+#FROM randomdude/gcc-cross-x86_64-elf
+FROM deiv/gcc-cross-x86_64-elf
 
 RUN apt-get update
 RUN apt-get upgrade -y
