@@ -21,3 +21,12 @@
  * noinline_for_stack instead.  For documentation reasons.
  */
 #define noinline_for_stack noinline
+
+# define __kernel	__attribute__((address_space(0)))
+# define __user		__attribute__((noderef, address_space(__user)))
+# define __iomem	__attribute__((noderef, address_space(__iomem)))
+# define __percpu	__attribute__((noderef, address_space(__percpu)))
+# define __rcu		__attribute__((noderef, address_space(__rcu)))
+
+/* Are two types/vars the same type (ignoring qualifiers)? */
+#define __same_type(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))

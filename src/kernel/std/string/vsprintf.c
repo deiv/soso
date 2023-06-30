@@ -20,7 +20,7 @@
 #include "kernel/compiler/compiler_types.h"
 
 #include "asm/byteorder.h"
-#include "asm/memory.h"
+
 
 // XXX: duplicated in itoa
 const char hex_asc_upper[] = "0123456789ABCDEF";

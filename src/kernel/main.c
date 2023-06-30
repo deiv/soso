@@ -3,16 +3,16 @@
 #include "kernel/printk.h"
 #include "kernel/std/string.h"
 
-extern const struct console vga_console;
+extern struct console vga_console;
+extern struct console* serial8250_console;
 
 void kernel_main(unsigned long addr_mboot_info) {
 
     /*
-     * TODO: initialize the console ...
+     * TODO: initialize the console in a more independent fashion ...
      */
-    vga_console.init();
-    vga_console.set_color(PRINT_COLOR_YELLOW, PRINT_COLOR_BLACK);
-
+    register_console(&vga_console);
+    register_console(serial8250_console);
 
     printk("Booting 64-bit kernel!\n");
 

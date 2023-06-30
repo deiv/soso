@@ -40,8 +40,8 @@ void vga_console_init();
 void vga_console_clear();
 void vga_console_newline();
 void vga_console_send_char(char character);
-void vga_console_put_char(char character);
-void vga_console_put_string(char* str);
+void vga_console_put_char(struct console *console, char character);
+void vga_console_put_string(struct console *console, const char* str);
 void vga_console_set_color(u8 foreground, u8 background);
 void vga_console_set_cursor_size(u16 from, u16 to);
 void vga_console_move_cursor(unsigned short pos);
@@ -58,9 +58,11 @@ void vga_console_clear_row(size_t row) {
     }
 }
 
-void vga_console_init(void) {
+int vga_console_setup(struct console *console) {
     vga_console_clear();
     vga_console_set_cursor_size(0, 12);
+
+    return 0;
 }
 
 void vga_console_clear() {
@@ -107,14 +109,14 @@ void vga_console_send_char(char character) {
     current_col++;
 }
 
-void vga_console_put_char(char character) {
+void vga_console_put_char(struct console *console, char character) {
     vga_console_send_char(character);
     vga_console_move_cursor(current_row * NUM_COLS + current_col);
 }
 
-void vga_console_put_string(char* str) {
+void vga_console_put_string(struct console *console, const char* str) {
     for (size_t i = 0; 1; i++) {
-        char character = (u8) str[i];
+        char character = str[i];
 
         if (character == '\0') {
             break;
@@ -134,6 +136,7 @@ void vga_console_set_cursor_size(u16 from, u16 to)
 {
     u16 curs, cure;
 
+    /* TODO: read original value */
     curs = (curs & 0xc0) | from;
     cure = (cure & 0xe0) | to;
 
@@ -152,9 +155,8 @@ void vga_console_move_cursor(unsigned short pos)
 }
 
 const struct console vga_console = {
-        .init = vga_console_init,
-        .clear = vga_console_clear,
-        .put_char = vga_console_put_char,
-        .put_string = vga_console_put_string,
-        .set_color = vga_console_set_color
+    .name = "tty",  /* not a real tty, but it could work atm */
+    .setup = vga_console_setup,
+    .put_char = vga_console_put_char,
+    .put_string = vga_console_put_string
 };

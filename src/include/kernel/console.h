@@ -3,6 +3,9 @@
 #include <kernel/std/types.h>
 #include <kernel/std/stddef.h>
 
+/*
+ * TODO: move to vga_console ?
+ */
 enum {
     PRINT_COLOR_BLACK = 0,
     PRINT_COLOR_BLUE = 1,
@@ -22,13 +25,27 @@ enum {
     PRINT_COLOR_WHITE = 15,
 };
 
+#define CONSOLE_CONSDEV	(1) /* Preferred console, /dev/console */
+#define CONSOLE_ENABLED	(2)
+
 /**
  * TODO: remove the char usage is dependent of encoding
  */
 struct console {
-    void (*init)(void);
-    void (*clear)(void);
-    void (*put_char)(char character);
-    void (*put_string)(char* string);
-    void (*set_color)(u8 foreground, u8 background);
+    const char *name;
+    short       flags;
+
+    int  (*setup)(struct console *);
+    void (*put_char)(struct console *, char character);
+    void (*put_string)(struct console *, const char* string);
+
+    /*
+     * Internal use pointer.
+     *
+     * Due that consoles are initialized in early stages, we cannot
+     * ensure that we have a working heap. So we will maintain a list here.
+     */
+    struct console* next;
 };
+
+void register_console(struct console *newcon);
