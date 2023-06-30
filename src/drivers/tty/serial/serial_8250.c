@@ -170,11 +170,14 @@ int serial8250_console_init(struct console *console) {
     serial_configure_baud_rate(console_port, port->uartclk / 16 / 115200);
     serial_configure_line(console_port);
 
+    port->ops->config_port(port, port->flags);
+
     serial8250_console_state.port = console_port;
 
-    printk("Serial: 8250/16550 console, using port line %i (iobase: 0x%x) as console\n",
+    printk("Serial: 8250/16550 console, using port line %i (iobase: 0x%x, type: %i)\n",
            console_port->port.line,
-           console_port->port.iobase);
+           console_port->port.iobase,
+           console_port->port.type);
 
     return 0;
 }

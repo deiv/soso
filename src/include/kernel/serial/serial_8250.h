@@ -34,6 +34,7 @@ struct uart_8250_ops {
 #define SERIAL_OFFSET_LINE_CONTROL_PORT 3
 #define SERIAL_OFFSET_MODEM_PORT 4
 #define SERIAL_OFFSET_LINE_STATUS_PORT 5
+#define SERIAL_OFFSET_SCRATCH_PORT 7
 
 #define SERIAL_OFFSET_DLL	0	/* Out: Divisor Latch Low */
 #define SERIAL_OFFSET_DLM	1	/* Out: Divisor Latch High */

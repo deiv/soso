@@ -5,8 +5,62 @@
 #include "port_8250.h"
 #include "common_8250.h"
 
-static const struct uart_ops serial8250_ops = {
+#define SCRATCH_TEST_VALUE 0x2A
 
+static void autoconfig(struct uart_8250_port *up)
+{
+    struct uart_port *port = &up->port;
+    u8 scratch_test;
+    u8 fifo_test;
+
+    serial_out(up, SERIAL_OFFSET_FIFO_PORT, 0xE7);
+    fifo_test = serial_in(up, SERIAL_OFFSET_FIFO_PORT);
+
+    switch (fifo_test >> 6) {
+        /* ports without FIFO */
+        case 0:
+            /* 8250 have the scratch broken */
+            serial_out(up, SERIAL_OFFSET_SCRATCH_PORT, SCRATCH_TEST_VALUE);
+            scratch_test = serial_in(up, SERIAL_OFFSET_SCRATCH_PORT);
+            if (SCRATCH_TEST_VALUE == scratch_test)
+                up->port.type = PORT_16450;
+            else
+                up->port.type = PORT_8250;
+            break;
+
+        /* reserved, unexpected */
+        case 1:
+            port->type = PORT_UNKNOWN;
+            break;
+
+        /* FIFO broken */
+        case 2:
+            port->type = PORT_16550;
+            break;
+
+        /* FIFO enabled */
+        case 3:
+            /* 64 Byte FIFO Enabled (16750 only) */
+            if ((fifo_test & 0x20) > 0)
+                up->port.type = PORT_16750;
+            else
+                up->port.type = PORT_16550A;
+            break;
+    }
+}
+
+static void serial8250_config_port(struct uart_port *port, u32 flags)
+{
+    struct uart_8250_port *up = up_to_u8250p(port);
+
+    if (flags & SERIAL_PORT_AUTOCONF)
+        autoconfig(up);
+
+    /* TODO: now we can enable FIFO */
+}
+
+static const struct uart_ops serial8250_ops = {
+    .config_port	= serial8250_config_port
 };
 
 /* Uart divisor latch read */
