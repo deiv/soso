@@ -3,8 +3,10 @@
 #include "boot/multiboot2.h"
 
 #include "kernel/printk.h"
+#include "kernel/boot/boot_parameters.h"
+#include "kernel/bug/runtime_bug.h"
 
-void print_multiboot_info(unsigned long addr_info)
+void get_boot_parameters(unsigned long addr_info, struct boot_parameters* boot_parameters)
 {
     struct multiboot_tag *tag;
 
@@ -15,39 +17,24 @@ void print_multiboot_info(unsigned long addr_info)
 
         switch (tag->type) {
             case MULTIBOOT_TAG_TYPE_CMDLINE:
-                printk("Command line = %s\n",
-                        ((struct multiboot_tag_string *) tag)->string);
+                boot_parameters->cmdline = ((struct multiboot_tag_string *) tag)->string;
                 break;
 
             case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
-                printk("Boot loader name = %s\n",
-                        ((struct multiboot_tag_string *) tag)->string);
+                boot_parameters->bootloader = ((struct multiboot_tag_string *) tag)->string;
                 break;
 
-            case MULTIBOOT_TAG_TYPE_MODULE:
-                printk("Module at 0x%x-0x%x. Command line %s\n",
-                        ((struct multiboot_tag_module *) tag)->mod_start,
-                        ((struct multiboot_tag_module *) tag)->mod_end,
-                        ((struct multiboot_tag_module *) tag)->cmdline);
+            case MULTIBOOT_TAG_TYPE_LOAD_BASE_ADDR:
+                boot_parameters->load_base_addr = ((struct multiboot_tag_load_base_addr *) tag)->load_base_addr;
                 break;
 
             case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
-                printk("mem_lower = %dKB, mem_upper = %dKB\n",
-                        ((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
-                        ((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
-                break;
-
-            case MULTIBOOT_TAG_TYPE_BOOTDEV:
-                printk("Boot device 0x%x,%d,%d\n",
-                        ((struct multiboot_tag_bootdev *) tag)->biosdev,
-                        ((struct multiboot_tag_bootdev *) tag)->slice,
-                        ((struct multiboot_tag_bootdev *) tag)->part);
+                boot_parameters->mem_lower = ((struct multiboot_tag_basic_meminfo *) tag)->mem_lower;
+                boot_parameters->mem_upper = ((struct multiboot_tag_basic_meminfo *) tag)->mem_upper;
                 break;
 
             case MULTIBOOT_TAG_TYPE_MMAP: {
                 multiboot_memory_map_t *mmap;
-
-                printk("mmap\n");
 
                 for (mmap = ((struct multiboot_tag_mmap *) tag)->entries;
                      (multiboot_uint8_t *) mmap
@@ -55,28 +42,73 @@ void print_multiboot_info(unsigned long addr_info)
                      mmap = (multiboot_memory_map_t *)
                              ((unsigned long) mmap
                               + ((struct multiboot_tag_mmap *) tag)->entry_size)) {
+
+                    if (mmap->type == MULTIBOOT_MEMORY_AVAILABLE) {
+                        if (WARN_ON_TRUE(
+                                boot_parameters->available_memory_map_size >= BOOT_PARAMETERS_MAX_MEMORY_MAP_SIZE,
+                                "boot_parameters, reached max available memory map size: %i\n",
+                                BOOT_PARAMETERS_MAX_MEMORY_MAP_SIZE)) {
+                            continue;
+                        }
+
+                        boot_parameters->
+                                available_memory_map[boot_parameters->available_memory_map_size]
+                                .addr = mmap->addr;
+                        boot_parameters->
+                                available_memory_map[boot_parameters->available_memory_map_size]
+                                .len = mmap->len;
+                        boot_parameters->available_memory_map_size++;
+
+                    } else if (mmap->type == MULTIBOOT_MEMORY_RESERVED) {
+                        if (WARN_ON_TRUE(
+                                boot_parameters->reserved_memory_map_size >= BOOT_PARAMETERS_MAX_MEMORY_MAP_SIZE,
+                                "boot_parameters, reached max reserved memory map size: %i\n",
+                                BOOT_PARAMETERS_MAX_MEMORY_MAP_SIZE)) {
+                            continue;
+                        }
+
+                        boot_parameters->
+                                reserved_memory_map[boot_parameters->reserved_memory_map_size]
+                                .addr = mmap->addr;
+                        boot_parameters->
+                                reserved_memory_map[boot_parameters->reserved_memory_map_size]
+                                .len = mmap->len;
+                        boot_parameters->reserved_memory_map_size++;
+                    } else {
+                        WARN("boot_parameters, please add unsupported mmap->type %i\n", mmap->type);
+                    }
+                    /*
                     printk(" base_addr = 0x%x%x,"
                             " length = 0x%x%x, type = 0x%x\n",
                             (unsigned) (mmap->addr >> 32),
                             (unsigned) (mmap->addr & 0xffffffff),
                             (unsigned) (mmap->len >> 32),
                             (unsigned) (mmap->len & 0xffffffff),
-                            (unsigned) mmap->type);
+                            (unsigned) mmap->type);*/
                 }
             }
                 break;
-                /*case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
-                {
+
+            case MULTIBOOT_TAG_TYPE_FRAMEBUFFER: {
+
+                    struct screen_info* screen_info = &boot_parameters->screen_info;
+
                     multiboot_uint32_t color;
                     unsigned i;
                     struct multiboot_tag_framebuffer *tagfb
                             = (struct multiboot_tag_framebuffer *) tag;
                     void *fb = (void *) (unsigned long) tagfb->common.framebuffer_addr;
 
-                    switch (tagfb->common.framebuffer_type)
-                    {
-                        case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED:
-                        {
+                    screen_info->type = tagfb->common.framebuffer_type;
+                    screen_info->addr = tagfb->common.framebuffer_addr;
+                    screen_info->pitch = tagfb->common.framebuffer_pitch;
+                    screen_info->width = tagfb->common.framebuffer_width;
+                    screen_info->height = tagfb->common.framebuffer_height;
+                    screen_info->bpp = tagfb->common.framebuffer_bpp;
+/*
+                    switch (tagfb->common.framebuffer_type) {
+
+                        case MULTIBOOT_FRAMEBUFFER_TYPE_INDEXED: {
                             unsigned best_distance, distance;
                             struct multiboot_color *palette;
 
@@ -97,6 +129,8 @@ void print_multiboot_info(unsigned long addr_info)
                                     best_distance = distance;
                                 }
                             }
+
+
                         }
                             break;
 
@@ -150,9 +184,28 @@ void print_multiboot_info(unsigned long addr_info)
                             }
                                 break;
                         }
-                    }
+                    }*/
                     break;
-                }*/
+                }
+
+            /*case MULTIBOOT_TAG_TYPE_MODULE:
+                printk("Module at 0x%x-0x%x. Command line %s\n",
+                        ((struct multiboot_tag_module *) tag)->mod_start,
+                        ((struct multiboot_tag_module *) tag)->mod_end,
+                        ((struct multiboot_tag_module *) tag)->cmdline);
+                break;
+
+              case MULTIBOOT_TAG_TYPE_BOOTDEV:
+                printk("Boot device 0x%x,%d,%d\n",
+                        ((struct multiboot_tag_bootdev *) tag)->biosdev,
+                        ((struct multiboot_tag_bootdev *) tag)->slice,
+                        ((struct multiboot_tag_bootdev *) tag)->part);
+                break;
+            */
+
+            default:
+                printk("Tag 0x%x, %i\n", tag->type, tag->type);
+                break;
         }
     }
 }
