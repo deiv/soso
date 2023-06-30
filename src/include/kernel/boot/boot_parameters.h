@@ -31,5 +31,3 @@ struct boot_parameters {
     struct memory_map reserved_memory_map[BOOT_PARAMETERS_MAX_MEMORY_MAP_SIZE];
     struct screen_info screen_info;
 };
-
-void get_boot_parameters(unsigned long addr_info, struct boot_parameters* boot_parameters);

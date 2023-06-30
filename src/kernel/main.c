@@ -1,9 +1,11 @@
 
-#include "kernel/console.h"
-#include "kernel/printk.h"
-#include "kernel/std/string.h"
-#include "kernel/std/stddef.h"
-#include "kernel/boot/boot_parameters.h"
+#include <kernel/console.h>
+#include <kernel/printk.h>
+#include <kernel/std/string.h>
+#include <kernel/std/stddef.h>
+#include <kernel/boot/boot_parameters.h>
+
+#include <boot/multiboot.h>
 
 extern struct console vga_console;
 extern struct console* serial8250_console;
