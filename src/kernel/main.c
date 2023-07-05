@@ -1,14 +1,16 @@
 
 #include <kernel/console.h>
 #include <kernel/printk.h>
-#include <kernel/std/string.h>
 #include <kernel/std/stddef.h>
 #include <kernel/boot/boot_parameters.h>
+
+#include <asm/pic.h>
 
 #include <boot/multiboot.h>
 
 extern struct console vga_console;
 extern struct console* serial8250_console;
+extern struct legacy_pic legacy_pic;
 
 struct boot_parameters boot_parameters = {
         .cmdline = NULL,
@@ -63,4 +65,10 @@ void kernel_main(unsigned long addr_mboot_info) {
             boot_parameters.screen_info.width,
             boot_parameters.screen_info.height,
             boot_parameters.screen_info.bpp);
+
+    /*
+     * TODO: at some point this need to be platform dependent on x86
+     */
+    legacy_pic.probe();
+    legacy_pic.init(0);
 }
