@@ -147,3 +147,15 @@ clean:
 
 .PHONY: default
 default: build-x86_64
+
+.PHONY: all
+all: build-x86_64
+	$(x86_64_ARCH)-elf-objcopy --only-keep-debug  ${x86_64_DIST_DIR}/${KERNEL_EXE} $(BUILD_DIR)/kernel.sym
+
+.PHONY: emulator
+emulator:
+	qemu-system-x86_64 -cdrom ${x86_64_DIST_DIR}/${KERNEL_ISO} -serial stdio
+
+.PHONY: emulator-debug
+emulator-debug:
+	qemu-system-x86_64 -s -S -cdrom ${x86_64_DIST_DIR}/${KERNEL_ISO} -serial stdio
