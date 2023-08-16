@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <asm/bitsperlong.h>
+#include <soso/asm/bitsperlong.h>
 
 /* XXX: all the defs should go in asm-generic/posix_types.h */
 

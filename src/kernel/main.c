@@ -5,6 +5,7 @@
 #include <kernel/boot/boot_parameters.h>
 
 #include <asm/pic.h>
+#include <asm/traps.h>
 
 #include <boot/multiboot.h>
 
@@ -71,4 +72,6 @@ void kernel_main(unsigned long addr_mboot_info) {
      */
     legacy_pic.probe();
     legacy_pic.init(0);
+
+    traps_init();
 }

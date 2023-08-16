@@ -41,7 +41,7 @@ USER_API_INCLUDE_DIR=$(SRC_DIR)/userapi/include
 USER_API_ARCH_INCLUDE_DIR=$(SRC_DIR)/arch/${x86_64_ARCH}/userapi/include
 
 KERNEL_INCLUDE_CFLAGS=-I $(KERNEL_INCLUDE_DIR) -I $(KERNEL_ARCH_INCLUDE_DIR)
-KERNEL_INCLUDE_ASMFLAGS=-I $(KERNEL_ARCH_INCLUDE_DIR)
+KERNEL_INCLUDE_ASMFLAGS=-I $(KERNEL_INCLUDE_DIR) -I $(KERNEL_ARCH_INCLUDE_DIR)
 USER_API_INCLUDE_CFLAGS=-I $(USER_API_INCLUDE_DIR) -I $(USER_API_ARCH_INCLUDE_DIR)
 
 CFLAGS=-ffreestanding -mcmodel=kernel -mno-red-zone -nostdlib -no-pie -Wimplicit-fallthrough
@@ -84,6 +84,7 @@ $(boot_object_files): ${BUILD_DIR}/boot/%.o : src/boot/%.c
 	mkdir -p $(dir $@)
 	$(x86_64_ARCH)-elf-gcc -c \
 		$(KERNEL_INCLUDE_CFLAGS) \
+		$(USER_API_INCLUDE_CFLAGS) \
 		$(CFLAGS) \
 		$(patsubst ${BUILD_DIR}/boot/%.o, src/boot/%.c, $@) \
 		-o $@
@@ -102,6 +103,7 @@ $(x86_64_asm_object_files): ${BUILD_DIR}/$(x86_64_ARCH)/%.o : src/arch/$(x86_64_
 	$(x86_64_ARCH)-elf-gcc -c \
 		$(KERNEL_INCLUDE_ASMFLAGS) \
 		$(CFLAGS) \
+		-D__ASSEMBLY__=1 \
 		$(patsubst ${BUILD_DIR}/$(x86_64_ARCH)/%.o, src/arch/$(x86_64_ARCH)/%.S, $@) \
 		-o $@
 
