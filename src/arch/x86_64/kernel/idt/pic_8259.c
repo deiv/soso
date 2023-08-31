@@ -27,6 +27,14 @@
 #define PIC_ICW4_AUTO	0x02		/* Auto (normal) EOI */
 #define PIC_CASCADE_IR	2           /* Cascade on IRQ 2 */
 
+/*
+ * This contains the irq mask for both 8259A irq controllers,
+ */
+static unsigned int cached_irq_mask = 0xffff;
+
+#define cached_master_mask	(cached_irq_mask)
+#define cached_slave_mask	(cached_irq_mask >> 8)
+
 static int probe_8259A(void)
 {
     unsigned char probe_val = ~(1 << PIC_CASCADE_IR);
@@ -60,13 +68,6 @@ static int probe_8259A(void)
 
 static void init_8259A(int auto_eoi)
 {
-    unsigned long flags;
-
-    u8 master_mask, slave_mask;
-
-    master_mask = inb(PIC_MASTER_DATA);
-    slave_mask = inb(PIC_SLAVE_DATA);
-
     /* mask all of 8259A-1 */
     outb(0xff, PIC_MASTER_DATA);
 
@@ -100,11 +101,34 @@ static void init_8259A(int auto_eoi)
      */
 
     /* restore master and salIRQ mask */
-    outb(master_mask, PIC_MASTER_DATA);
-    outb(slave_mask, PIC_SLAVE_DATA);
+    outb(cached_master_mask, PIC_MASTER_DATA);
+    outb(cached_slave_mask, PIC_SLAVE_DATA);
+}
+
+static void mask_8259A_irq(unsigned int irq)
+{
+    unsigned int mask;
+
+    mask = ~(1 << irq);
+    cached_irq_mask &= mask;
+
+    if (irq & 8)
+        outb(cached_slave_mask, PIC_SLAVE_DATA);
+    else
+        outb(cached_master_mask, PIC_MASTER_DATA);
+}
+
+static void eoi_irq_8259A(unsigned int irq)
+{
+    if (irq & 8)
+        outb(0x20, PIC_SLAVE_COMMAND);
+
+    outb(0x20, PIC_MASTER_COMMAND);
 }
 
 struct legacy_pic legacy_pic = {
         .init = init_8259A,
-        .probe = probe_8259A
+        .probe = probe_8259A,
+        .mask = mask_8259A_irq,
+        .eoi = eoi_irq_8259A
 };

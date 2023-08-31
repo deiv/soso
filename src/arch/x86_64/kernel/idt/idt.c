@@ -5,8 +5,9 @@
 #include <kernel/std/array.h>
 #include <kernel/bug/runtime_bug.h>
 #include <kernel/compiler/linkage.h>
-#include <asm/bitops.h>
+#include <kernel/lib/bitmap.h>
 #include <asm/traps.h>
+#include <asm/irq_vector.h>
 
 #include "idt_entry.h"
 
@@ -120,7 +121,7 @@ static const struct idt_data def_idts[] = {
     INTG(X86_TRAP_UD,		asm_exc_invalid_op),
     INTG(X86_TRAP_NM,		asm_exc_device_not_available),
     ISTG(X86_TRAP_DF,		asm_exc_double_fault, IST_INDEX_DF),
-    INTG(X86_TRAP_OLD_MF,		asm_exc_coproc_segment_overrun),
+    INTG(X86_TRAP_OLD_MF,	asm_exc_coproc_segment_overrun),
     INTG(X86_TRAP_TS,		asm_exc_invalid_tss),
     INTG(X86_TRAP_NP,		asm_exc_segment_not_present),
     INTG(X86_TRAP_SS,		asm_exc_stack_segment),
@@ -129,15 +130,15 @@ static const struct idt_data def_idts[] = {
      * TODO: Not possible on 64-bit
      */
     INTG(X86_TRAP_PF,		asm_exc_page_fault), // TODO: early ?
-    INTG(X86_TRAP_SPURIOUS,	asm_exc_spurious_interrupt_bug),
+    INTG(X86_TRAP_SPURIOUS, asm_exc_spurious_interrupt_bug),
     INTG(X86_TRAP_MF,		asm_exc_coprocessor_error),
     INTG(X86_TRAP_AC,		asm_exc_alignment_check),
     INTG(X86_TRAP_XF,		asm_exc_simd_coprocessor_error),
 };
 
-#define NR_VECTORS			 256
-
 DECLARE_BITMAP(system_vectors, NR_VECTORS);
+
+extern char irq_entries_start[];
 
 struct desc_ptr {
     unsigned short size;
@@ -214,6 +215,14 @@ static __always_inline void load_idt(const struct desc_ptr *dtr)
 void idt_setup_traps(void)
 {
     idt_setup_from_table(idt_table, def_idts, ARRAY_SIZE(def_idts), true);
+
+    int i = FIRST_EXTERNAL_VECTOR;
+    void *entry;
+
+    for_each_clear_bit_from(i, system_vectors, FIRST_SYSTEM_VECTOR) {
+        entry = irq_entries_start + IDT_ALIGN * (i - FIRST_EXTERNAL_VECTOR);
+        set_intr_gate(i, entry);
+    }
 
     load_idt(&idt_descr);
 }

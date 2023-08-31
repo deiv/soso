@@ -1,6 +1,7 @@
 
 #include "calling_convention.h"
 #include "kernel/compiler/linkage.h"
+#include <asm/irq_vector.h>
 
 .code64
 .section .entry.text, "ax"
@@ -54,4 +55,30 @@ SYM_CODE_START(\asmsym)
 SYM_CODE_END(\asmsym)
 .endm
 
+/*
+ * Interrupt entry/exit.
+ *
+ + The interrupt stubs push (vector) onto the stack, which is the error_code
+ * position of idtentry exceptions, and jump to one of the two idtentry points
+ * (common/spurious).
+ *
+ * common_interrupt is a hotpath, align it to a cache line
+ */
+.macro idtentry_irq vector cfunc
+	idtentry \vector asm_\cfunc \cfunc has_error_code=1
+.endm
+
 #include "idt_entry.h"
+
+.align IDT_ALIGN
+SYM_CODE_START(irq_entries_start)
+    vector=FIRST_EXTERNAL_VECTOR
+    .rept NR_EXTERNAL_VECTORS
+0 :
+	.byte	0x6a, vector
+	jmp	asm_common_interrupt
+	/* Ensure that the above is IDT_ALIGN bytes max */
+	.fill 0b + IDT_ALIGN - ., 1, 0xcc
+	vector = vector+1
+    .endr
+SYM_CODE_END(irq_entries_start)

@@ -1,10 +1,13 @@
 
 #pragma once
 
+#define IDT_ALIGN	(8 * (1))
+
 #ifndef __ASSEMBLY__
 
 #include <kernel/compiler/compiler_attributes.h>
 #include <kernel/compiler/linkage.h>
+#include <kernel/std/types.h>
 
 #include <soso/asm/ptrace.h>
 
@@ -14,7 +17,7 @@
  * @vector:	Vector number (ignored for C)
  * @func:	Function name of the entry point
  *
- * Declares three functions:
+ * Declares two functions:
  * - The ASM entry point: asm_##func
  * - The C handler called from the ASM entry point
  *
@@ -32,9 +35,8 @@
  * @vector:	Vector number (ignored for C)
  * @func:	Function name of the entry point
  *
- * Declares three functions:
+ * Declares two functions:
  * - The ASM entry point: asm_##func
- * - The XEN PV trap entry point: xen_##func (maybe unused)
  * - The C handler called from the ASM entry point
  *
  * Same as DECLARE_IDTENTRY, but has an extra error_code argument for the
@@ -45,6 +47,17 @@
 	__visible void func(struct pt_regs *regs, unsigned long error_code)
 
 /**
+ * DECLARE_IDTENTRY_IRQ - Declare functions for device interrupt IDT entry
+ *			  points (common/spurious)
+ * @vector:	Vector number (ignored for C)
+ * @func:	Function name of the entry point
+ *
+ * Maps to DECLARE_IDTENTRY_ERRORCODE()
+ */
+#define DECLARE_IDTENTRY_IRQ(vector, func)				\
+	DECLARE_IDTENTRY_ERRORCODE(vector, func)
+
+/**
  * DEFINE_IDTENTRY - Emit code for simple IDT entry points
  * @func:	Function name of the entry point
  *
@@ -53,9 +66,6 @@
  * The macro is written so it acts as function definition. Append the
  * body with a pair of curly brackets.
  *
- * irqentry_enter() contains common code which has to be invoked before
- * arbitrary code in the body. irqentry_exit() contains common code
- * which has to run before returning to the low level assembly code.
  */
 #define DEFINE_IDTENTRY(func)						\
 __visible void func(struct pt_regs *regs)
@@ -72,16 +82,41 @@ __visible void func(struct pt_regs *regs)
 __visible void func(struct pt_regs *regs,		\
 				     unsigned long error_code)
 
+/**
+ * DEFINE_IDTENTRY_IRQ - Emit code for device interrupt IDT entry points
+ * @func:	Function name of the entry point
+ *
+ * The vector number is pushed by the low level entry stub and handed
+ * to the function as error_code argument which needs to be truncated
+ * to an u8 because the push is sign extending.
+ *
+ */
+#define DEFINE_IDTENTRY_IRQ(func)					            \
+static void __##func(struct pt_regs *regs, u32 vector);			\
+									                            \
+__visible void func(struct pt_regs *regs,			            \
+			    unsigned long error_code)			            \
+{									                            \
+	u32 vector = (u32)(u8)error_code;                           \
+    __##func (regs, vector);                                    \
+}									                            \
+									                            \
+static noinline void __##func(struct pt_regs *regs, u32 vector)
+
 #else /* !__ASSEMBLY__ */
 
 /*
  * The ASM variants for DECLARE_IDTENTRY*() which emit the ASM entry stubs.
  */
-#define DECLARE_IDTENTRY(vector, func)					\
+#define DECLARE_IDTENTRY(vector, func)					    \
 	idtentry vector asm_##func func has_error_code=0
 
 #define DECLARE_IDTENTRY_ERRORCODE(vector, func)			\
 	idtentry vector asm_##func func has_error_code=1
+
+/* Entries for common/spurious (device) interrupts */
+#define DECLARE_IDTENTRY_IRQ(vector, func)                  \
+	idtentry_irq vector func
 
 #endif
 
@@ -110,3 +145,13 @@ DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_PF,	exc_page_fault);
 // TODO: should be handled especially
 DECLARE_IDTENTRY_ERRORCODE(X86_TRAP_DF,	exc_double_fault);
 DECLARE_IDTENTRY(X86_TRAP_DB,	asm_exc_debug);
+
+/*
+ * Dummy trap number so the low level ASM macro vector number checks do not
+ * match which results in emitting plain IDTENTRY stubs without bells and
+ * whistles.
+ */
+#define X86_TRAP_OTHER		0xFFFF
+
+/* Device interrupts common/spurious */
+DECLARE_IDTENTRY_IRQ(X86_TRAP_OTHER,	common_interrupt);

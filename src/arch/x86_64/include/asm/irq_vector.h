@@ -26,5 +26,14 @@
  *   round up to the next 16-vector boundary
  */
 #define ISA_IRQ_VECTOR(irq)		(((FIRST_EXTERNAL_VECTOR + 16) & ~15) + irq)
+#define VECTOR_ISA_IRQ(vector)		(vector - ((FIRST_EXTERNAL_VECTOR + 16) & ~15))
 
 #define NR_IRQS_LEGACY			16
+
+#define NR_VECTORS			 256
+#define FIRST_SYSTEM_VECTOR		NR_VECTORS
+
+#define NR_EXTERNAL_VECTORS		(FIRST_SYSTEM_VECTOR - FIRST_EXTERNAL_VECTOR)
+#define NR_SYSTEM_VECTORS		(NR_VECTORS - FIRST_SYSTEM_VECTOR)
+
+#define NR_IRQS NR_VECTORS

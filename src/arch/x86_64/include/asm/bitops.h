@@ -1,9 +1,10 @@
 
 #pragma once
 
-#include "kernel/compiler/compiler.h"
-#include "asm/alternative.h"
-#include "asm/asm.h"
+#include <kernel/compiler/compiler.h>
+#include <soso/types.h>
+#include <asm/alternative.h>
+#include <asm/asm.h>
 
 /**
  * fls - find last set bit in word
@@ -93,4 +94,33 @@ set_bit(long nr, volatile unsigned long *addr)
         asm volatile(LOCK_PREFIX __ASM_SIZE(bts) " %1,%0"
         : : RLONG_ADDR(addr), "Ir" (nr) : "memory");
     }
+}
+
+
+/**
+ * ffz - find first zero bit in word
+ * @word: The word to search
+ *
+ * Undefined if no zero exists, so code should check against ~0UL first.
+ */
+static __always_inline unsigned long ffz(unsigned long word)
+{
+    asm("rep; bsf %1,%0"
+            : "=r" (word)
+            : "r" (~word));
+    return word;
+}
+
+/**
+ * __ffs - find first set bit in word
+ * @word: The word to search
+ *
+ * Undefined if no bit exists, so code should check against 0 first.
+ */
+static __always_inline unsigned long __ffs(unsigned long word)
+{
+    asm("rep; bsf %1,%0"
+            : "=r" (word)
+            : "rm" (word));
+    return word;
 }

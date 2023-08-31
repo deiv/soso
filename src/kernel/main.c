@@ -3,9 +3,11 @@
 #include <kernel/printk.h>
 #include <kernel/std/stddef.h>
 #include <kernel/boot/boot_parameters.h>
+#include <kernel/irq/irq.h>
 
 #include <asm/pic.h>
 #include <asm/traps.h>
+#include <asm/io.h>
 
 #include <boot/multiboot.h>
 
@@ -25,6 +27,17 @@ struct boot_parameters boot_parameters = {
         .reserved_memory_map = {0},
         .screen_info = {0}
 };
+
+void keyboard_irq(struct irq_desc *desc)
+{
+    printk("vector: %d, irq: %d\n", desc->irq, desc->hwirq);
+
+    unsigned char scan_code = inb(0x60);
+
+    printk("scan_code: %d\n", scan_code);
+
+    desc->chip->eoi(desc->hwirq);
+}
 
 void kernel_main(unsigned long addr_mboot_info) {
 
@@ -74,4 +87,11 @@ void kernel_main(unsigned long addr_mboot_info) {
     legacy_pic.init(0);
 
     traps_init();
+    irq_init();
+    irq_enable();
+
+    irq_setup(ISA_IRQ_VECTOR(1), &keyboard_irq);
+
+    /* don't return, we want interruts alive */
+    for (;;) {}
 }

@@ -21,8 +21,5 @@ typedef __kernel_size_t	 size_t;
 typedef __kernel_ssize_t ssize_t;
 typedef __kernel_ptrdiff_t	ptrdiff_t;
 
-#define DECLARE_BITMAP(name,bits) \
-	unsigned long name[BITS_TO_LONGS(bits)]
-
 #endif
 
